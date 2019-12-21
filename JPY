@@ -1,0 +1,44 @@
+import requests
+from pyquery import PyQuery as pq
+import matplotlib.pyplot as plt
+
+a = []
+b = []
+
+for k in range(8,10):                            #設定2018,2019
+    for j in range(1,10):                        #1月到9月
+        homeRes = requests.get("https://rate.bot.com.tw/xrt/quote/201"+str(k)+"-0"+str(j)+"/JPY")  #連接到台灣銀行匯率網站
+        homeDoc = pq(homeRes.text) 
+        time = 0                                 #計算每個月開市天數
+        total = 0                                #每天開市時金額相加
+        for i in range(1,32):                    #一個月最多31天
+            try:
+                price = homeDoc("body > div.page-wrapper > main > div:nth-child(4) > table > tbody > tr:nth-child(" + str(i) + ") > td:nth-child(6)").text()       #price捉取相對應價格              
+                total = total + float(price)
+                if i == 1:        #因為要取每月平均，只記錄一天日子
+                    date = homeDoc("body > div.page-wrapper > main > div:nth-child(4) > table > tbody > tr:nth-child(" + str(i) + ") > td:nth-child(1) > a").text()    #date捉取相對應時間
+                    b.append(date[-8:-3])  #取出年與月 ex.18/01
+                time = time + 1
+            except:
+                break
+        a.append(float(total/time))        #紀錄平均價格
+for k in range(8,10):
+    for j in range(10,13):                 #10月到12月
+        homeRes = requests.get("https://rate.bot.com.tw/xrt/quote/201"+str(k)+"-"+str(j)+"/JPY")
+        homeDoc = pq(homeRes.text) 
+        g = []
+        time = 0
+        total = 0
+        for i in range(1,32):   
+            try:
+                date = homeDoc("body > div.page-wrapper > main > div:nth-child(4) > table > tbody > tr:nth-child(" + str(i) + ") > td:nth-child(1) > a").text()
+                price = homeDoc("body > div.page-wrapper > main > div:nth-child(4) > table > tbody > tr:nth-child(" + str(i) + ") > td:nth-child(6)").text()                     
+                total = total + float(price)
+                if i == 1:
+                    b.append(date[-8:-3])
+                time = time + 1
+            except:
+                break
+        a.append(float(total/time))
+
+plt.plot(b,a)         #畫圖
